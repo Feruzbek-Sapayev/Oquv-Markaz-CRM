@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+{% block title %}{{ group.name }} | Guruh{% endblock %}
+{% block page_title %}Guruh tafsilotlari{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div style="display:flex;align-items:center;gap:10px;">
+        <a href="{% url 'courses:group_list' %}" class="btn-outline-custom" title="Orqaga">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div>
+            <div class="page-title">{{ group.name }}</div>
+            <div class="page-subtitle">{{ group.course.name }}</div>
+        </div>
+    </div>
+    {% if not user.is_student %}
+    <div class="d-flex gap-2">
+        <a href="{% url 'attendance:session_create' group.pk %}" class="btn-primary-custom">
+            <i class="fas fa-calendar-plus"></i> Davomat
+        </a>
+        <a href="{% url 'courses:enrollment_create' group.pk %}" class="btn-outline-custom">
+            <i class="fas fa-user-plus"></i> O'quvchi qo'shish
+        </a>
+        <a href="{% url 'courses:group_export' group.pk %}" class="btn-outline-custom">
+            <i class="fas fa-file-excel"></i> Excel
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon purple"><i class="fas fa-users"></i></div>
+            <div class="stat-value">{{ group.student_count }}</div>
+            <div class="stat-label">O'quvchilar / {{ group.max_students }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fas fa-clock"></i></div>
+            <div class="stat-value" style="font-size:20px;">{{ group.start_time|time:"H:i" }}</div>
+            <div class="stat-label">Boshlanish vaqti</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fas fa-money-bill-wave"></i></div>
+            <div class="stat-value" style="font-size:18px;">{{ group.course.monthly_fee|money_format }}</div>
+            <div class="stat-label">Oylik to'lov (so'm)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon amber"><i class="fas fa-chalkboard-teacher"></i></div>
+            <div class="stat-value" style="font-size:16px;">{{ group.teacher.get_full_name|default:"—" }}</div>
+            <div class="stat-label">O'qituvchi</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-user-graduate me-2" style="color:var(--primary);"></i>O'quvchilar ro'yxati</h5>
+                <span style="font-size:12px;color:var(--text-muted);">{{ enrollments.count }} ta o'quvchi</span>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>O'quvchi</th>
+                            <th>Telefon</th>
+                            <th>Chegirma</th>
+                            <th>To'lov</th>
+                            <th>Qo'shildi</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in enrollments %}
+                        <tr>
+                            <td style="color:var(--text-muted);">{{ forloop.counter }}</td>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <div class="avatar-circle">{{ e.student.first_name|first }}</div>
+                                    <a href="{% url 'students:detail' e.student.pk %}"
+                                        style="font-weight:600;color:var(--dark);text-decoration:none;">
+                                        {{ e.student }}
+                                    </a>
+                                </div>
+                            </td>
+                            <td style="font-size:12px;">{{ e.student.phone }}</td>
+                            <td>
+                                {% if e.discount_percent %}
+                                <span class="badge-custom badge-partial">{{ e.discount_percent }}%</span>
+                                {% else %}<span style="color:var(--text-muted);">—</span>{% endif %}
+                            </td>
+                            <td style="font-weight:600;color:var(--success);">{{ e.discounted_fee|money_format }} so'm
+                            </td>
+                            <td style="font-size:12px;color:var(--text-muted);">{{ e.enrolled_at }}</td>
+                            <td>
+                                {% if not user.is_student %}
+                                <form method="POST" action="{% url 'courses:enrollment_remove' e.pk %}"
+                                    onsubmit="return confirm('Guruhdan chiqarilsinmi?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm"
+                                        style="background:rgba(239,68,68,0.1);color:var(--danger);border:none;border-radius:6px;padding:4px 10px;"
+                                        title="Guruhdan chiqarish">
+                                        <i class="fas fa-user-minus"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state" style="padding:30px;">
+                                    <div class="empty-icon">👥</div>
+                                    <h4>Hech kim yo'q</h4>
+                                    <a href="{% url 'courses:enrollment_create' group.pk %}"
+                                        class="btn-primary-custom mt-2">O'quvchi qo'shish</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-info-circle me-2" style="color:var(--secondary);"></i>Guruh ma'lumotlari</h5>
+            </div>
+            <div class="card-body-custom" style="padding:0;">
+                {% include "includes/_info_row.html" with icon="fa-book" label="Kurs" value=group.course.name %}
+                {% include "includes/_info_row.html" with icon="fa-clock" label="Vaqt" value=group.start_time|time:"H:i"|add:" – "|add:group.end_time|time:"H:i" %}
+                {% include "includes/_info_row.html" with icon="fa-calendar-days" label="Kunlar" value=group.get_days_display %}
+                {% include "includes/_info_row.html" with icon="fa-calendar-plus" label="Boshladi" value=group.start_date %}
+                {% if group.room %}
+                    {% include "includes/_info_row.html" with icon="fa-door-open" label="Xona" value=group.room %}
+                {% endif %}
+                {% if not user.is_student %}
+                <div style="padding:16px 22px;display:flex;gap:12px;">
+                    <a href="{% url 'courses:group_edit' group.pk %}" class="btn-outline-custom"
+                        style="flex:1;justify-content:center;">
+                        <i class="fas fa-edit"></i> Tahrirlash
+                    </a>
+                    {% if user.is_admin_role %}
+                    <a href="#" class="btn-danger-custom" data-bs-toggle="modal"
+                        data-bs-target="#deleteConfirmModal"
+                        data-url="{% url 'courses:group_delete' group.pk %}"
+                        data-name="{{ group.name }}">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
