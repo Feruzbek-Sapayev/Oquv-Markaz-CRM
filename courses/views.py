@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from django.core.paginator import Paginator
 from .models import Course, Group, Enrollment
 from .forms import CourseForm, GroupForm, EnrollmentForm
 from accounts.permissions import admin_required, teacher_required
@@ -63,7 +64,12 @@ def group_list(request):
         groups = Group.objects.filter(enrollments__student__user=request.user, enrollments__is_active=True).select_related('course', 'teacher')
     else:
         groups = Group.objects.none()
-    return render(request, 'courses/group_list.html', {'groups': groups})
+
+    paginator = Paginator(groups, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'courses/group_list.html', {'groups': page_obj, 'page_obj': page_obj})
 
 
 @login_required

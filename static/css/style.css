@@ -42,7 +42,7 @@
   --bg-card: #172033;
   --bg-input: #141C2B;
   --bg-hover: #1B2538;
-  --border-subtle: #263248;
+  --border-subtle: rgba(255, 255, 255, 0.05);
   --card-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
   --text-heading: #E6EDF3;
   --text-body: #C9D4E0;
@@ -61,7 +61,8 @@ body {
   background: var(--bg-main);
   color: var(--text-body);
   min-height: 100vh;
-  display: flex;
+  display: block;
+  /* Changed from flex to block for easier overflow control */
 }
 
 /* ── SIDEBAR ── */
@@ -83,7 +84,10 @@ body {
 }
 
 .sidebar-brand {
-  padding: 24px 20px 20px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -115,10 +119,13 @@ body {
 }
 
 .brand-text .tagline {
-  font-size: 11px;
+  font-size: 9.5px;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  display: block;
+  margin-top: 1px;
 }
 
 .sidebar-nav {
@@ -215,14 +222,11 @@ body {
 /* ── MAIN CONTENT ── */
 .main-wrapper {
   margin-left: var(--sidebar-w);
-  flex: 1;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  /* Important: prevents child elements from expanding the parent */
-  overflow-x: hidden;
-  /* CRITICAL: Prevent entire site from scrolling horizontally */
+  position: relative;
 }
 
 .topbar {
@@ -233,9 +237,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 900;
+  right: 0;
+  left: var(--sidebar-w);
+  z-index: 1050;
+  /* Increased to be above sidebar and other elements */
+  transition: var(--transition);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .topbar-title {
@@ -289,6 +298,7 @@ body {
 
 .content-area {
   padding: 28px;
+  padding-top: calc(28px + 64px);
   flex: 1;
   min-width: 0;
   overflow-x: hidden;
@@ -422,10 +432,11 @@ body {
 
 .table-custom td {
   padding: 13px 16px;
-  border-bottom: 1px solid rgba(38, 50, 72, 0.6);
+  border-bottom: 1px solid var(--border-subtle);
   font-size: 13.5px;
   color: var(--text-body);
   vertical-align: middle;
+  transition: var(--transition);
 }
 
 .table-custom tr:last-child td {
@@ -434,6 +445,7 @@ body {
 
 .table-custom tr:hover td {
   background: var(--bg-hover);
+  border-bottom-color: transparent;
 }
 
 /* ── BADGES ── */

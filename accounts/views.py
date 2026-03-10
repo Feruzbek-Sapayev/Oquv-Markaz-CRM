@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import Group
+from django.core.paginator import Paginator
 from .models import CustomUser
 from .forms import CustomUserForm
 
@@ -32,7 +33,82 @@ def logout_view(request):
 
 @login_required
 def profile_view(request):
-    return render(request, 'accounts/profile.html')
+    user = request.user
+    profile = None
+    profile_type = None
+
+    if user.role == 'student':
+        profile = getattr(user, 'student_profile', None)
+        profile_type = 'student'
+    elif user.role == 'teacher':
+        profile = getattr(user, 'teacher_profile', None)
+        profile_type = 'teacher'
+    elif user.role in ['admin', 'superadmin', 'accountant']:
+        profile = getattr(user, 'admin_profile', None)
+        profile_type = 'admin'
+
+    context = {
+        'profile': profile,
+        'profile_type': profile_type,
+    }
+    return render(request, 'accounts/profile.html', context)
+
+
+@login_required
+def profile_edit_view(request):
+    from admins.models import AdminProfile
+    from teachers.models import Teacher
+    from students.models import Student
+
+    user = request.user
+    profile = None
+
+    if user.role == 'student':
+        profile = getattr(user, 'student_profile', None)
+    elif user.role == 'teacher':
+        profile = getattr(user, 'teacher_profile', None)
+    elif user.role in ['admin', 'superadmin', 'accountant']:
+        profile = getattr(user, 'admin_profile', None)
+        if not profile:
+            profile = AdminProfile.objects.create(
+                user=user,
+                first_name=user.first_name,
+                last_name=user.last_name,
+            )
+
+    if request.method == 'POST':
+        # Update user fields
+        user.first_name = request.POST.get('first_name', user.first_name)
+        user.last_name = request.POST.get('last_name', user.last_name)
+        user.email = request.POST.get('email', user.email)
+        user.phone = request.POST.get('phone', user.phone)
+        if request.FILES.get('avatar'):
+            user.avatar = request.FILES['avatar']
+        user.save()
+
+        # Update profile fields
+        if profile:
+            profile.first_name = user.first_name
+            profile.last_name = user.last_name
+            profile.phone = user.phone
+            birth_date = request.POST.get('birth_date')
+            if birth_date:
+                profile.birth_date = birth_date
+            if hasattr(profile, 'middle_name'):
+                profile.middle_name = request.POST.get('middle_name', profile.middle_name)
+            if hasattr(profile, 'address'):
+                profile.address = request.POST.get('address', profile.address)
+            if request.FILES.get('photo'):
+                profile.photo = request.FILES['photo']
+            profile.save()
+
+        messages.success(request, 'Profil muvaffaqiyatli yangilandi!')
+        return redirect('accounts:profile')
+
+    context = {
+        'profile': profile,
+    }
+    return render(request, 'accounts/profile_edit.html', context)
 
 
 @login_required
@@ -41,7 +117,10 @@ def user_list(request):
         messages.error(request, 'Ruxsatingiz yo\'q!')
         return redirect('dashboard:home')
     users = CustomUser.objects.all().order_by('role', 'username')
-    return render(request, 'accounts/user_list.html', {'users': users})
+    paginator = Paginator(users, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'accounts/user_list.html', {'users': page_obj, 'page_obj': page_obj})
 
 
 

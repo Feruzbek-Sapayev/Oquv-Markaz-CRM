@@ -28,7 +28,6 @@ class Teacher(models.Model):
     photo = models.ImageField(upload_to='teachers/', blank=True, null=True, verbose_name='Rasm')
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE, verbose_name='Holat')
     hired_at = models.DateField(null=True, blank=True, verbose_name='Ishga kirgan sana')
-    salary_monthly = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name='Oylik maosh')
     notes = models.TextField(blank=True, verbose_name='Izoh')
     created_at = models.DateTimeField(auto_now_add=True)
 

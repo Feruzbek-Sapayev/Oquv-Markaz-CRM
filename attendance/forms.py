@@ -8,7 +8,7 @@ class AttendanceSessionForm(forms.ModelForm):
         fields = ['group', 'date', 'topic']
         widgets = {
             'group': forms.Select(attrs={'class': 'form-select'}),
-            'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'date': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
             'topic': forms.TextInput(attrs={'class': 'form-control'}),
         }
 

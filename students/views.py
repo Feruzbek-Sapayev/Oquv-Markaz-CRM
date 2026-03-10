@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from django.core.paginator import Paginator
 from .models import Student
 from .forms import StudentForm
 from accounts.permissions import admin_required, teacher_required
@@ -30,8 +31,14 @@ def student_list(request):
         )
     if status:
         students = students.filter(status=status)
+
+    paginator = Paginator(students, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'students': students,
+        'students': page_obj,
+        'page_obj': page_obj,
         'query': query,
         'status': status,
         'statuses': Student.Status.choices,

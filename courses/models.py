@@ -2,6 +2,7 @@ from django.db import models
 
 
 class Course(models.Model):
+    image = models.ImageField(upload_to='course_images/', blank=True, null=True, verbose_name='Kurs rasmi')
     name = models.CharField(max_length=200, verbose_name='Kurs nomi')
     description = models.TextField(blank=True, verbose_name='Tavsif')
     duration_months = models.PositiveIntegerField(default=6, verbose_name='Davomiyligi (oy)')
@@ -18,6 +19,26 @@ class Course(models.Model):
         return self.name
 
 
+class CourseTeacher(models.Model):
+    class SalaryType(models.TextChoices):
+        FIXED = 'fixed', 'Aniq summa'
+        PERCENTAGE = 'percentage', 'Foiz'
+
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='course_teachers', verbose_name='Kurs')
+    teacher = models.ForeignKey('teachers.Teacher', on_delete=models.CASCADE, related_name='course_teachers', verbose_name='O\'qituvchi')
+    salary_type = models.CharField(max_length=20, choices=SalaryType.choices, default=SalaryType.FIXED, verbose_name='Maosh turi')
+    salary_monthly = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name='Oylik maosh')
+    salary_percentage = models.IntegerField(default=0, verbose_name='Foiz (%)')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Kurs O\'qituvchi'
+        verbose_name_plural = 'Kurs O\'qituvchilar'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.course} - {self.teacher}"
+
 class Group(models.Model):
     class DayChoices(models.TextChoices):
         ODD = 'odd', 'Toq kunlar (Du, Ch, Ju)'
@@ -27,10 +48,6 @@ class Group(models.Model):
 
     name = models.CharField(max_length=100, verbose_name='Guruh nomi')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='groups', verbose_name='Kurs')
-    teacher = models.ForeignKey(
-        'teachers.Teacher', on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='teaching_groups', verbose_name="O'qituvchi"
-    )
     start_time = models.TimeField(verbose_name='Boshlanish vaqti')
     end_time = models.TimeField(verbose_name='Tugash vaqti')
     days = models.CharField(max_length=20, choices=DayChoices.choices, default=DayChoices.ODD, verbose_name='Dars kunlari')

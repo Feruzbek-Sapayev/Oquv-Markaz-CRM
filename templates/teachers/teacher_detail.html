@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load currency_tags %}
 {% block title %}{{ teacher }} | O'qituvchi{% endblock %}
 {% block page_title %}O'qituvchi ma'lumotlari{% endblock %}
 
@@ -48,7 +49,6 @@
                     {% if teacher.hired_at %}
                         {% include "includes/_info_row.html" with icon="fa-briefcase" label="Ishga kirdi" value=teacher.hired_at %}
                     {% endif %}
-                    {% include "includes/_info_row.html" with icon="fa-money-bill-wave" label="Oylik maosh" value=teacher.salary_monthly|floatformat:0 %}
                 </div>
             </div>
         </div>

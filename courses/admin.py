@@ -11,9 +11,9 @@ class CourseAdmin(admin.ModelAdmin):
 
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
-    list_display = ['name', 'course', 'teacher', 'start_time', 'end_time', 'is_active']
+    list_display = ['name', 'course', 'start_time', 'end_time', 'is_active']
     list_filter = ['is_active', 'course', 'days']
-    search_fields = ['name', 'course__name', 'teacher__username', 'teacher__first_name', 'teacher__last_name']
+    search_fields = ['name', 'course__name']
 
 
 @admin.register(Enrollment)

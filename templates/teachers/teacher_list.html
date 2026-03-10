@@ -52,7 +52,6 @@
                     <th>O'qituvchi</th>
                     <th>Telefon</th>
                     <th>Jins</th>
-                    <th>Oylik maosh</th>
                     <th>Holat</th>
                     <th style="text-align:right;">Amallar</th>
                 </tr>
@@ -80,7 +79,6 @@
                     </td>
                     <td style="font-size:13px;">{{ t.phone }}</td>
                     <td style="font-size:12px;color:var(--text-muted);">{{ t.get_gender_display }}</td>
-                    <td style="font-size:13px;font-weight:600;color:var(--success);">{{ t.salary_monthly|money_format }} so'm</td>
                     <td>
                         <span
                             class="badge-custom {% if t.status == 'active' %}badge-active{% else %}badge-inactive{% endif %}">

@@ -62,26 +62,30 @@
             <div class="card-header-custom border-bottom-0 pb-0">
                 <h5 class="fw-bold mb-0" style="color: var(--text-heading);">So'nggi To'lovlar</h5>
             </div>
-            <div class="card-body-custom p-4">
-                <div class="list-group list-group-flush">
-                    {% for p in payments %}
-                    <div class="list-group-item bg-transparent border-0 px-0 mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="fw-bold" style="color: var(--text-heading);">{{ p.month }}/{{ p.year }}</span>
-                            <span class="badge {% if p.status == 'paid' %}text-bg-success{% elif p.status == 'partial' %}text-bg-warning{% else %}text-bg-danger{% endif %}" style="border-radius: 8px;">
-                                {{ p.get_status_display }}
-                            </span>
-                        </div>
-                        <div class="d-flex justify-content-between small text-muted">
-                            <span>{{ p.amount|money_format }} so'm</span>
-                            <span>{{ p.paid_at|date:"d.m.Y" }}</span>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="text-center py-3 text-muted">To'lovlar tarixi mavjud emas.</div>
-                    {% endfor %}
-                </div>
-                <div class="text-center mt-3">
+            <div class="card-body-custom p-0">
+                <table class="table-custom">
+                    <tbody>
+                        {% for p in payments %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold" style="color: var(--text-heading);">{{ p.month }}/{{ p.year }}</div>
+                                <div class="small text-muted">{{ p.paid_at|date:"d.m.Y" }}</div>
+                            </td>
+                            <td class="text-end">
+                                <div class="fw-bold" style="color: var(--text-heading);">{{ p.amount|money_format }} <span class="small text-muted">so'm</span></div>
+                                <span class="badge {% if p.status == 'paid' %}text-bg-success{% elif p.status == 'partial' %}text-bg-warning{% else %}text-bg-danger{% endif %}" style="border-radius: 8px; font-size: 10px;">
+                                    {{ p.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center py-4 text-muted">To'lovlar tarixi mavjud emas.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="p-3">
                     <a href="{% url 'payments:list' %}" class="btn-outline-custom w-100 py-2">Barcha To'lovlar</a>
                 </div>
             </div>

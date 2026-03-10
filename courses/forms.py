@@ -15,20 +15,31 @@ class CourseForm(forms.ModelForm):
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
+# class CourseTeacherForm(forms.ModelForm):
+#     class Meta:
+#         model = CourseTeacher
+#         fields = ['course', 'teacher', 'salary_type', 'salary_monthly', 'salary_percentage']
+#         widgets = {
+#             'course': forms.Select(attrs={'class': 'form-select'}),
+#             'teacher': forms.Select(attrs={'class': 'form-select'}),
+#             'salary_type': forms.Select(attrs={'class': 'form-select'}),
+#             'salary_monthly': forms.NumberInput(attrs={'class': 'form-control'}),
+#             'salary_percentage': forms.NumberInput(attrs={'class': 'form-control'}),
+#         }
+
 
 class GroupForm(forms.ModelForm):
     class Meta:
         model = Group
-        fields = ['name', 'course', 'teacher', 'start_time', 'end_time', 'days', 'start_date', 'end_date', 'max_students', 'room', 'is_active']
+        fields = ['name', 'course', 'start_time', 'end_time', 'days', 'start_date', 'end_date', 'max_students', 'room', 'is_active']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'course': forms.Select(attrs={'class': 'form-select'}),
-            'teacher': forms.Select(attrs={'class': 'form-select'}),
             'start_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'end_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'days': forms.Select(attrs={'class': 'form-select'}),
-            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'start_date': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
+            'end_date': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
             'max_students': forms.NumberInput(attrs={'class': 'form-control'}),
             'room': forms.TextInput(attrs={'class': 'form-control'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),

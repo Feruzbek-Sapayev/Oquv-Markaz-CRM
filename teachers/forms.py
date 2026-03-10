@@ -13,7 +13,7 @@ class TeacherForm(forms.ModelForm):
         fields = [
             'last_name', 'first_name', 'middle_name', 'phone', 'email',
             'gender', 'birth_date', 'address', 'photo', 'status',
-            'hired_at', 'salary_monthly', 'notes'
+            'hired_at', 'notes'
         ]
         widgets = {
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -22,12 +22,11 @@ class TeacherForm(forms.ModelForm):
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+998 90 123 45 67'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-select'}),
-            'birth_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'birth_date': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'photo': forms.FileInput(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
-            'hired_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'salary_monthly': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'hired_at': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 

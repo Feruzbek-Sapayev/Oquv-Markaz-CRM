@@ -15,8 +15,8 @@ class PaymentForm(forms.ModelForm):
             'method': forms.Select(attrs={'class': 'form-select'}),
             'month': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 12}),
             'year': forms.NumberInput(attrs={'class': 'form-control', 'min': 2020}),
-            'paid_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'due_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'paid_at': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
+            'due_date': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 

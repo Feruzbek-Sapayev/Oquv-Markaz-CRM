@@ -1,0 +1,39 @@
+{% if page_obj.has_other_pages %}
+<nav style="display:flex;justify-content:center;align-items:center;gap:6px;margin-top:24px;padding:16px 0;">
+    {% if page_obj.has_previous %}
+    <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+        class="btn-outline-custom" style="padding:6px 12px;font-size:12px;" title="Birinchi">
+        <i class="fas fa-angles-left"></i>
+    </a>
+    <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+        class="btn-outline-custom" style="padding:6px 12px;font-size:12px;">
+        <i class="fas fa-chevron-left"></i>
+    </a>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="btn-primary-custom" style="padding:6px 14px;font-size:13px;cursor:default;">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+            class="btn-outline-custom" style="padding:6px 14px;font-size:13px;">{{ num }}</a>
+        {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+        <span style="color:var(--text-muted);font-size:12px;">…</span>
+        {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+        class="btn-outline-custom" style="padding:6px 12px;font-size:12px;">
+        <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+        class="btn-outline-custom" style="padding:6px 12px;font-size:12px;" title="Oxirgi">
+        <i class="fas fa-angles-right"></i>
+    </a>
+    {% endif %}
+</nav>
+<div style="text-align:center;font-size:12px;color:var(--text-muted);padding-bottom:8px;">
+    {{ page_obj.paginator.count }} ta yozuvdan {{ page_obj.start_index }}-{{ page_obj.end_index }} ko'rsatilmoqda
+</div>
+{% endif %}

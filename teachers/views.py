@@ -2,10 +2,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from django.core.paginator import Paginator
 from .models import Teacher
 from .forms import TeacherForm
 from accounts.permissions import admin_required, teacher_required
-from courses.models import Group
+from courses.models import Group, CourseTeacher, Course
 
 
 @admin_required
@@ -22,8 +23,14 @@ def teacher_list(request):
         )
     if status:
         teachers = teachers.filter(status=status)
+
+    paginator = Paginator(teachers, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'teachers': teachers,
+        'teachers': page_obj,
+        'page_obj': page_obj,
         'query': query,
         'status': status,
         'statuses': Teacher.Status.choices,
@@ -41,7 +48,9 @@ def teacher_detail(request, pk):
             messages.error(request, "Ushbu sahifani ko'rish huquqingiz yo'q!")
             return redirect('dashboard:home')
 
-    groups = Group.objects.filter(teacher=teacher).select_related('course').order_by('-is_active', 'name')
+    teacher_courses = CourseTeacher.objects.filter(teacher=teacher).values_list('course_id', flat=True)
+    courses = Course.objects.filter(id__in=teacher_courses).values_list('id', flat=True)
+    groups = Group.objects.filter(course__in=courses).select_related('course').order_by('-is_active', 'name')
     context = {
         'teacher': teacher,
         'groups': groups,

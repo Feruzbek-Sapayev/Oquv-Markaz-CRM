@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db.models import Q, Sum
 from django.utils import timezone
 from django.http import HttpResponse
+from django.core.paginator import Paginator
 from .models import Payment
 from .forms import PaymentForm
 from students.models import Student
@@ -46,8 +47,14 @@ def payment_list(request):
         )
 
     total_income = payments.filter(status__in=['paid', 'partial']).aggregate(t=Sum('amount'))['t'] or 0
+
+    paginator = Paginator(payments, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'payments': payments[:100],
+        'payments': page_obj,
+        'page_obj': page_obj,
         'status': status,
         'month': month,
         'year': year,
@@ -123,7 +130,12 @@ def debtor_list(request):
     
     payments = payments.select_related('student', 'group__course').order_by('student__last_name')
     total_debt = payments.aggregate(t=Sum('expected_amount') - Sum('amount'))['t'] or 0
-    return render(request, 'payments/debtor_list.html', {'payments': payments, 'total_debt': total_debt})
+
+    paginator = Paginator(payments, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'payments/debtor_list.html', {'payments': page_obj, 'page_obj': page_obj, 'total_debt': total_debt})
 
 
 @login_required

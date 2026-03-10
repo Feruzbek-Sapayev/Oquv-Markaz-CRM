@@ -9,8 +9,19 @@
   <link rel="apple-touch-icon" href="{% static 'img/favicon.svg' %}">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link href="{% static 'css/style.css' %}" rel="stylesheet">
   {% block extra_css %}{% endblock %}
+  <script>
+    (function() {
+      const theme = localStorage.getItem('theme') || 'dark';
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    })();
+  </script>
 </head>
 <body>
 
@@ -110,11 +121,13 @@
 
   <div class="sidebar-footer">
     <div class="user-card">
-      <div class="user-avatar">{{ user.username|first|upper }}</div>
-      <div class="user-info flex-grow-1">
-        <div class="uname">{{ user.get_full_name|default:user.username|truncatechars:18 }}</div>
-        <div class="urole">{{ user.get_role_display }}</div>
-      </div>
+      <a href="{% url 'accounts:profile' %}" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; flex-grow:1;" title="Profilga o'tish">
+        <div class="user-avatar">{{ user.username|first|upper }}</div>
+        <div class="user-info">
+          <div class="uname">{{ user.get_full_name|default:user.username|truncatechars:18 }}</div>
+          <div class="urole">{{ user.get_role_display }}</div>
+        </div>
+      </a>
       <a href="{% url 'accounts:logout' %}" title="Chiqish" style="color:#94a3b8; font-size:14px;">
         <i class="fas fa-right-from-bracket"></i>
       </a>
@@ -135,9 +148,14 @@
       </div>
     </div>
     <div class="topbar-actions">
-      <div class="topbar-date">
-        <i class="fas fa-clock me-1"></i>
-        <span id="livetime"></span>
+      <div class="topbar-date" style="font-weight: 500; font-size: 14px;">
+        {% if upcoming_class %}
+          <i class="fas fa-bell text-primary me-1"></i>
+          <span>{{ upcoming_class.name }} ({{ upcoming_class.start_time|time:"H:i" }})</span>
+        {% else %}
+          <i class="fas fa-clock me-1"></i>
+          <span id="livetime"></span>
+        {% endif %}
       </div>
       <button type="button" class="btn-icon theme-toggle" id="themeToggle" title="Tema">
         <i class="fas fa-moon"></i>
@@ -203,18 +221,35 @@
   {% block extra_toasts %}{% endblock %}
 </div>
 
+<!-- BIRTHDAY CELEBRATION MODAL -->
+{% if user_birthday_today %}
+<div class="modal fade" id="birthdayModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg text-center p-4" style="border-radius: 24px; background: linear-gradient(135deg, var(--bg-card), var(--bg-main));">
+      <div class="modal-body">
+        <div class="mb-4" style="font-size: 64px;">🎂</div>
+        <h2 style="font-weight: 800; color: var(--primary); margin-bottom: 16px;">Tug'ilgan kuningiz muborak!</h2>
+        <p style="color: var(--text-body); font-size: 16px; margin-bottom: 24px;">
+            Hurmatli <strong>{{ user.get_full_name|default:user.username }}</strong>, o'quv markazimiz jamoasi sizni bugungi shodiyonangiz bilan chin qalbimizdan tabriklaydi! 🎊
+        </p>
+        <button type="button" class="btn-primary-custom px-5" data-bs-dismiss="modal">Rahmat! ❤️</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
   // Theme toggle
   const themeToggle = document.getElementById('themeToggle');
-  const storedTheme = localStorage.getItem('theme') || 'dark';
-  if (storedTheme === 'dark') {
-    document.documentElement.classList.add('dark');
-    document.body.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
+  
+  if (localStorage.getItem('theme') === 'light') {
     document.body.classList.remove('dark');
+  } else {
+    document.body.classList.add('dark');
   }
   function updateThemeIcon() {
     const icon = themeToggle.querySelector('i');
@@ -236,10 +271,13 @@
 
   // Live clock
   function updateTime() {
-    const now = new Date();
-    document.getElementById('livetime').textContent =
-      now.toLocaleDateString('uz-UZ') + ' ' +
-      now.toTimeString().slice(0, 5);
+    const liveTimeEl = document.getElementById('livetime');
+    if (liveTimeEl) {
+      const now = new Date();
+      liveTimeEl.textContent =
+        now.toLocaleDateString('uz-UZ') + ' ' +
+        now.toTimeString().slice(0, 5);
+    }
   }
   updateTime();
   setInterval(updateTime, 1000);
@@ -268,6 +306,35 @@
       }
     });
   }
+
+  // Birthday Celebration
+  {% if user_birthday_today %}
+  (function() {
+      const bdayKey = 'bday_celebrated_{{ user.id }}_{{ now|date:"Ymd" }}';
+      if (!sessionStorage.getItem(bdayKey)) {
+          const modal = new bootstrap.Modal(document.getElementById('birthdayModal'));
+          setTimeout(() => {
+              modal.show();
+              confetti({
+                  particleCount: 150,
+                  spread: 70,
+                  origin: { y: 0.6 },
+                  colors: ['#6366f1', '#a855f7', '#ec4899']
+              });
+              sessionStorage.setItem(bdayKey, 'true');
+          }, 1000);
+      }
+  })();
+  {% endif %}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  flatpickr("input[type=time]", {
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: "H:i",
+    time_24hr: true
+  });
 </script>
 {% block extra_js %}{% endblock %}
 </body>
