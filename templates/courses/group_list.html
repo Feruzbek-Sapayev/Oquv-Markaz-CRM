@@ -37,12 +37,11 @@
                     </td>
                     <td style="font-size:12px;color:var(--text-muted);">{{ g.course.name }}</td>
                     <td>
-                        {% if g.teacher %}
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <div class="avatar-circle" style="width:28px;height:28px;font-size:11px;">{{ g.teacher.first_name|first }}</div>
-                            <span style="font-size:13px;">{{ g.teacher.get_full_name }}</span>
-                        </div>
-                        {% else %}<span style="color:var(--text-muted);font-size:12px;">—</span>{% endif %}
+                        {% for ct in g.course.course_teachers.all %}
+                            <div style="font-size:12px; margin-bottom: 2px;">{{ ct.teacher.get_full_name }}</div>
+                        {% empty %}
+                            <span style="color:var(--text-muted);font-size:12px;">—</span>
+                        {% endfor %}
                     </td>
                     <td style="font-size:12px;">{{ g.start_time|time:"H:i" }}–{{ g.end_time|time:"H:i" }}</td>
                     <td style="font-size:12px;color:var(--text-muted);">{{ g.get_days_display }}</td>
@@ -68,7 +67,7 @@
                                     class="fas fa-eye"></i></a>
                             
                             {% if not user.is_student %}
-                                {% if user.is_admin_role or g.teacher.user == user %}
+                                {% if user.is_admin_role or user.role == 'teacher' %}
                                 <a href="{% url 'courses:group_edit' g.pk %}" class="btn btn-sm"
                                     style="background:rgba(99,102,241,0.1);color:var(--primary);border-radius:6px;"><i
                                         class="fas fa-edit"></i></a>

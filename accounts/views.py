@@ -6,6 +6,7 @@ from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
 from .models import CustomUser
 from .forms import CustomUserForm
+from django.contrib.auth.forms import AuthenticationForm
 
 
 def login_view(request):

@@ -19,9 +19,6 @@
         <a href="{% url 'attendance:session_create' group.pk %}" class="btn-primary-custom">
             <i class="fas fa-calendar-plus"></i> Davomat
         </a>
-        <a href="{% url 'courses:enrollment_create' group.pk %}" class="btn-outline-custom">
-            <i class="fas fa-user-plus"></i> O'quvchi qo'shish
-        </a>
         <a href="{% url 'courses:group_export' group.pk %}" class="btn-outline-custom">
             <i class="fas fa-file-excel"></i> Excel
         </a>
@@ -54,8 +51,8 @@
     <div class="col-md-3">
         <div class="stat-card">
             <div class="stat-icon amber"><i class="fas fa-chalkboard-teacher"></i></div>
-            <div class="stat-value" style="font-size:16px;">{{ group.teacher.get_full_name|default:"—" }}</div>
-            <div class="stat-label">O'qituvchi</div>
+            <div class="stat-value">{{ teachers.count }} ta</div>
+            <div class="stat-label">O'qituvchilar</div>
         </div>
     </div>
 </div>
@@ -64,8 +61,15 @@
     <div class="col-lg-8">
         <div class="card-custom">
             <div class="card-header-custom">
-                <h5><i class="fas fa-user-graduate me-2" style="color:var(--primary);"></i>O'quvchilar ro'yxati</h5>
-                <span style="font-size:12px;color:var(--text-muted);">{{ enrollments.count }} ta o'quvchi</span>
+                <div class="d-flex align-items-center gap-3">
+                    <h5 class="mb-0"><i class="fas fa-user-graduate me-2" style="color:var(--primary);"></i>O'quvchilar ro'yxati</h5>
+                    <span style="font-size:12px;color:var(--text-muted); background:var(--bg-input); padding:2px 10px; border-radius:10px; font-weight:600;">{{ enrollments.count }} ta o'quvchi</span>
+                </div>
+                {% if not user.is_student %}
+                <a href="{% url 'courses:enrollment_create' group.pk %}" class="btn-primary-custom" style="padding: 6px 14px; font-size: 13px;">
+                    <i class="fas fa-user-plus"></i> Qo'shish
+                </a>
+                {% endif %}
             </div>
             <div style="overflow-x:auto;">
                 <table class="table-custom">
@@ -135,7 +139,7 @@
     </div>
 
     <div class="col-lg-4">
-        <div class="card-custom">
+        <div class="card-custom mb-4">
             <div class="card-header-custom">
                 <h5><i class="fas fa-info-circle me-2" style="color:var(--secondary);"></i>Guruh ma'lumotlari</h5>
             </div>
@@ -163,6 +167,32 @@
                     {% endif %}
                 </div>
                 {% endif %}
+            </div>
+        </div>
+
+        <!-- Kurs O'qituvchilari Section -->
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h5><i class="fas fa-chalkboard-teacher me-2" style="color:var(--primary);"></i>Kurs o'qituvchilari</h5>
+            </div>
+            <div class="card-body-custom" style="padding:15px;">
+                {% for ct in teachers %}
+                <div class="d-flex align-items-center gap-3 {% if not forloop.last %}mb-3{% endif %} p-2" style="border-radius:12px; background:var(--bg-input);">
+                    {% if ct.teacher.photo %}
+                        <img src="{{ ct.teacher.photo.url }}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid var(--border-subtle);">
+                    {% else %}
+                        <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, var(--primary), var(--secondary)); display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:14px;">
+                            {{ ct.teacher.first_name|first }}
+                        </div>
+                    {% endif %}
+                    <div style="flex:1;">
+                        <div style="font-size:13.5px; font-weight:700; color:var(--text-heading);">{{ ct.teacher.get_full_name }}</div>
+                        <div style="font-size:11px; color:var(--text-muted);">{{ ct.teacher.phone }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-3 text-muted" style="font-size:13px;">O'qituvchilar biriktirilmagan</div>
+                {% endfor %}
             </div>
         </div>
     </div>

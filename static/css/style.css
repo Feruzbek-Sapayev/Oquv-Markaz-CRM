@@ -32,6 +32,7 @@
 
   --sidebar-w: 260px;
   --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --theme-filter: none;
 }
 
 /* Dark theme overrides */
@@ -48,6 +49,33 @@
   --text-body: #C9D4E0;
   --text-muted: #97A6B7;
   --text-placeholder: #6F7C8B;
+  --theme-filter: invert(1) grayscale(100%) brightness(2);
+}
+
+/* ── MODALS ── */
+.modal-content {
+  background: var(--bg-card) !important;
+  color: var(--text-body) !important;
+  border: 1px solid var(--border-subtle) !important;
+  box-shadow: var(--card-shadow) !important;
+}
+
+.modal-header, .modal-footer {
+  border-color: var(--border-subtle) !important;
+}
+
+.modal .btn-close {
+  filter: var(--theme-filter);
+}
+
+.modal-backdrop.show {
+  opacity: 0.8 !important;
+  background-color: #000 !important;
+}
+
+.dark .modal-backdrop.show {
+  opacity: 0.6 !important;
+  background-color: #000 !important;
 }
 
 * {

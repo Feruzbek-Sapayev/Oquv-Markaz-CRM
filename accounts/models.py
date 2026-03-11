@@ -36,3 +36,18 @@ class CustomUser(AbstractUser):
     @property
     def is_accountant(self):
         return self.role == self.Role.ACCOUNTANT
+
+    @property
+    def get_avatar_url(self):
+        if self.avatar:
+            return self.avatar.url
+        
+        # Check profiles based on role
+        if hasattr(self, 'admin_profile') and self.admin_profile.photo:
+            return self.admin_profile.photo.url
+        if hasattr(self, 'teacher_profile') and self.teacher_profile.photo:
+            return self.teacher_profile.photo.url
+        if hasattr(self, 'student_profile') and self.student_profile.photo:
+            return self.student_profile.photo.url
+        
+        return None

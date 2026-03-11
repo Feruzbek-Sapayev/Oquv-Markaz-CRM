@@ -57,7 +57,7 @@ def home(request):
         chart_months.append(f"{m:02d}/{y}")
         chart_income.append(float(income))
 
-    groups_with_counts = Group.objects.filter(is_active=True).select_related('course', 'teacher').annotate(
+    groups_with_counts = Group.objects.filter(is_active=True).select_related('course').annotate(
         enrolled=Count('enrollments', filter=Q(enrollments__is_active=True))
     )[:5]
 

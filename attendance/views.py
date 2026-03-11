@@ -61,7 +61,7 @@ def session_list(request):
     
     # Filter groups based on role
     if request.user.is_teacher:
-        groups = groups.filter(teacher__user=request.user)
+        groups = groups.filter(course__course_teachers__teacher__user=request.user).distinct()
     elif request.user.is_student:
         groups = groups.filter(enrollments__student__user=request.user, enrollments__is_active=True)
     elif not request.user.is_admin_role:
@@ -179,7 +179,7 @@ def session_list(request):
 def session_create(request, group_pk):
     group = get_object_or_404(Group, pk=group_pk)
     
-    if not request.user.is_admin_role and group.teacher.user != request.user:
+    if not request.user.is_admin_role and not group.course.course_teachers.filter(teacher__user=request.user).exists():
         messages.error(request, "Faqat o'zingizning guruhlaringiz uchun davomat olishingiz mumkin!")
         return redirect('attendance:session_list')
 
@@ -235,7 +235,7 @@ def session_delete(request, pk):
     session = get_object_or_404(AttendanceSession, pk=pk)
     group_pk = session.group.pk
     
-    if not request.user.is_admin_role and session.group.teacher.user != request.user:
+    if not request.user.is_admin_role and not session.group.course.course_teachers.filter(teacher__user=request.user).exists():
         messages.error(request, "Sizda ushbu sessiyani o'chirish huquqi yo'q!")
         return redirect('attendance:session_list')
     if request.method == 'POST':
@@ -266,7 +266,7 @@ def attendance_update_ajax(request):
     )
     
     # AJAX permission check
-    if not request.user.is_admin_role and session.group.teacher.user != request.user:
+    if not request.user.is_admin_role and not session.group.course.course_teachers.filter(teacher__user=request.user).exists():
         return JsonResponse({'status': 'error', 'message': 'Faqat o\'z guruhingizga davomat qo\'yishingiz mumkin'}, status=403)
     
     if status in ['present', 'absent']:
@@ -304,7 +304,7 @@ def export_attendance_excel(request):
         
     group = get_object_or_404(Group, pk=group_id)
     
-    if not request.user.is_admin_role and group.teacher.user != request.user:
+    if not request.user.is_admin_role and not group.course.course_teachers.filter(teacher__user=request.user).exists():
         messages.error(request, "Faqat o'z guruhingiz davomatini yuklab olishingiz mumkin!")
         return redirect('attendance:session_list')
     start_date = datetime.date(year, month, 1)

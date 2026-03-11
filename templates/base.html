@@ -122,7 +122,13 @@
   <div class="sidebar-footer">
     <div class="user-card">
       <a href="{% url 'accounts:profile' %}" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; flex-grow:1;" title="Profilga o'tish">
-        <div class="user-avatar">{{ user.username|first|upper }}</div>
+        <div class="user-avatar" style="overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, var(--primary), var(--secondary));">
+          {% if user.get_avatar_url %}
+            <img src="{{ user.get_avatar_url }}" style="width:100%; height:100%; object-fit:cover;">
+          {% else %}
+            {{ user.username|first|upper }}
+          {% endif %}
+        </div>
         <div class="user-info">
           <div class="uname">{{ user.get_full_name|default:user.username|truncatechars:18 }}</div>
           <div class="urole">{{ user.get_role_display }}</div>
@@ -185,8 +191,8 @@
         <div class="mb-4" style="width: 80px; height: 80px; background: rgba(239, 68, 68, 0.1); color: var(--danger); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto;">
           <i class="fas fa-trash-alt"></i>
         </div>
-        <h4 class="mb-2" style="font-weight: 700; color: var(--dark);">Haqiqatan ham o'chirilsinmi?</h4>
-        <p class="text-muted mb-4" id="deleteModalMessage">Siz <strong id="deleteTargetName">ushbu elementni</strong> doimiy o'chirib tashlamoqchimisiz? Bu amalni bekor qilib bo'lmaydi.</p>
+        <h4 class="mb-2" style="font-weight: 700; color: var(--text-heading);">Haqiqatan ham o'chirilsinmi?</h4>
+        <p class="text-muted mb-4" id="deleteModalMessage" style="color: var(--text-muted) !important;">Siz <strong id="deleteTargetName">ushbu elementni</strong> doimiy o'chirib tashlamoqchimisiz? Bu amalni bekor qilib bo'lmaydi.</p>
         
         <form id="deleteConfirmForm" method="POST">
           {% csrf_token %}

@@ -1,34 +1,265 @@
 {% extends 'base.html' %}
 {% block title %}{{ title }}{% endblock %}
 {% block page_title %}{{ title }}{% endblock %}
+
 {% block content %}
 <div class="page-header">
     <div class="page-title">{{ title }}</div>
     <a href="{% url 'courses:course_list' %}" class="btn-outline-custom"><i class="fas fa-arrow-left"></i> Orqaga</a>
 </div>
+
 <div class="form-card">
-    <form method="POST">{% csrf_token %}
-        <div class="row g-3">
-            <div class="col-12"><label class="form-label-custom">Kurs nomi *</label>{{ form.name }}</div>
-            <div class="col-md-6"><label class="form-label-custom">Davomiyligi (oy)</label>{{ form.duration_months }}
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Kurs Ma'lumotlari -->
+        <h5 class="mb-3" style="font-weight:700; color:var(--primary);">
+            <i class="fas fa-book me-2"></i>Kurs ma'lumotlari
+        </h5>
+        
+        <!-- Image Upload UI -->
+        <div style="text-align:center;margin-bottom:28px;">
+            {% if obj and obj.image %}
+            <img src="{{ obj.image.url }}" id="imagePreview"
+                style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:4px solid rgba(99,102,241,0.2);margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;">
+            <div id="imageInitial" style="display:none;width:100px;height:100px;background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:50%;align-items:center;justify-content:center;color:white;font-size:40px;font-weight:800;margin:0 auto 12px;">
+                <i class="fas fa-book" style="font-size:36px;"></i>
             </div>
-            <div class="col-md-6"><label class="form-label-custom">Oylik to'lov (so'm)</label>{{ form.monthly_fee }}
+            {% else %}
+            <img src="" id="imagePreview"
+                style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:4px solid rgba(99,102,241,0.2);margin-bottom:12px;display:none;margin-left:auto;margin-right:auto;">
+            <div id="imageInitial"
+                style="width:100px;height:100px;background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:40px;font-weight:800;margin:0 auto 12px;">
+                <i class="fas fa-book" style="font-size:36px;"></i>
             </div>
-            <div class="col-12"><label class="form-label-custom">Tavsif</label>{{ form.description }}</div>
-            <div class="col-12 d-flex align-items-center gap-2">{{ form.is_active }}<label class="form-check-label">Faol
-                    kurs</label></div>
+            {% endif %}
+            <div>
+                <label for="id_image" class="btn-outline-custom" style="cursor:pointer;padding:6px 14px;font-size:12px;display:inline-flex;">
+                    <i class="fas fa-camera me-1"></i> Rasm yuklash
+                </label>
+                <input type="file" id="id_image" name="image" accept="image/*" style="display:none;"
+                    onchange="previewImage(this)">
+            </div>
         </div>
-        {% if form.errors %}
+
+        <div class="row g-3 mb-4">
+            <div class="col-12" style="display:none;">
+                {{ form.image }}
+            </div>
+            <div class="col-12">
+                <label class="form-label-custom">Kurs nomi *</label>
+                {{ form.name }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label-custom">Davomiyligi (oy)</label>
+                {{ form.duration_months }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label-custom">Oylik to'lov (so'm)</label>
+                {{ form.monthly_fee }}
+            </div>
+            <div class="col-12">
+                <label class="form-label-custom">Tavsif</label>
+                {{ form.description }}
+            </div>
+            <div class="col-12 d-flex align-items-center gap-2">
+                {{ form.is_active }}
+                <label class="form-check-label">Faol kurs</label>
+            </div>
+        </div>
+
+        <!-- O'qituvchilarni biriktirish -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 style="font-weight:700; color:var(--primary); margin:0;">
+                <i class="fas fa-chalkboard-teacher me-2"></i>O'qituvchilar biriktirish
+            </h5>
+            <button type="button" id="add-teacher-btn" class="btn-primary-custom" style="padding: 5px 12px; font-size: 13px;">
+                <i class="fas fa-plus"></i> Yana qo'shish
+            </button>
+        </div>
+
+        {{ formset.management_form }}
+        <div id="formset-container">
+            {% for f in formset %}
+            <div class="formset-row card-custom p-3 mb-3" style="background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1);">
+                {{ f.id }}
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label-custom">O'qituvchi</label>
+                        {{ f.teacher }}
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label-custom">Maosh turi</label>
+                        {{ f.salary_type }}
+                    </div>
+                    <div class="col-md-5 salary-field-container">
+                        <div class="fixed-salary" style="display:none;">
+                            <label class="form-label-custom">Oylik maosh (summa)</label>
+                            {{ f.salary_monthly }}
+                        </div>
+                        <div class="percent-salary" style="display:none;">
+                            <label class="form-label-custom">Maosh foizi (%)</label>
+                            {{ f.salary_percentage }}
+                        </div>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-center justify-content-center">
+                        <div style="display:none;">{{ f.DELETE }}</div>
+                        <button type="button" class="remove-form-btn" style="color:var(--danger); background:none; border:none; padding:8px; font-size:16px; cursor:pointer;" title="O'chirish">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div id="empty-form" style="display:none;">
+            <div class="formset-row card-custom p-3 mb-3" style="background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1);">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label-custom">O'qituvchi</label>
+                        {{ formset.empty_form.teacher }}
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label-custom">Maosh turi</label>
+                        {{ formset.empty_form.salary_type }}
+                    </div>
+                    <div class="col-md-5 salary-field-container">
+                        <div class="fixed-salary" style="display:none;">
+                            <label class="form-label-custom">Oylik maosh (summa)</label>
+                            {{ formset.empty_form.salary_monthly }}
+                        </div>
+                        <div class="percent-salary" style="display:none;">
+                            <label class="form-label-custom">Maosh foizi (%)</label>
+                            {{ formset.empty_form.salary_percentage }}
+                        </div>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-center justify-content-center">
+                        <div style="display:none;"><input type="checkbox" name="course_teachers-__prefix__-DELETE" id="id_course_teachers-__prefix__-DELETE"></div>
+                        <button type="button" class="remove-form-btn" style="color:var(--danger); background:none; border:none; padding:8px; font-size:16px; cursor:pointer;" title="O'chirish">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if form.errors or formset.errors %}
         <div class="alert alert-danger mt-3" style="border-radius:10px;">
             {% for f, e in form.errors.items %}
-                {% for err in e %}<div>{{ err }}</div>{% endfor %}
+                {% for err in e %}<div>{{ f }}: {{ err }}</div>{% endfor %}
+            {% endfor %}
+            {% for form_err in formset.errors %}
+                {% for f, e in form_err.items %}
+                    {% for err in e %}<div>O'qituvchi #{{ forloop.parentloop.parentloop.counter }}: {{ err }}</div>{% endfor %}
+                {% endfor %}
             {% endfor %}
         </div>
         {% endif %}
+
         <div class="d-flex gap-3 mt-4">
             <button type="submit" class="btn-primary-custom"><i class="fas fa-save"></i> Saqlash</button>
             <a href="{% url 'courses:course_list' %}" class="btn-outline-custom">Bekor qilish</a>
         </div>
     </form>
 </div>
+
+<script>
+function previewImage(input) {
+    const preview = document.getElementById('imagePreview');
+    const initial = document.getElementById('imageInitial');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            if (initial) initial.style.display = 'none';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('formset-container');
+    const emptyFormHtml = document.getElementById('empty-form').innerHTML;
+    const addBtn = document.getElementById('add-teacher-btn');
+    const totalForms = document.getElementById('id_course_teachers-TOTAL_FORMS');
+
+    addBtn.addEventListener('click', function() {
+        const count = totalForms.value;
+        const newFormHtml = emptyFormHtml.replace(/__prefix__/g, count);
+        const div = document.createElement('div');
+        div.innerHTML = newFormHtml;
+        const newForm = div.firstElementChild;
+        container.appendChild(newForm);
+        totalForms.value = parseInt(count) + 1;
+        toggleSalaryFields(newForm); // Initial toggle for new form
+    });
+
+    // Handle Delete button
+    container.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-form-btn')) {
+            const row = e.target.closest('.formset-row');
+            // Check if it's an existing record (has a value in the id field)
+            const idField = row.querySelector('input[name$="-id"]');
+            
+            if (idField && idField.value) {
+                // Existing record: mark for deletion and hide
+                const deleteCheckbox = row.querySelector('input[name$="-DELETE"]');
+                if (deleteCheckbox) {
+                    deleteCheckbox.checked = true;
+                    row.style.display = 'none';
+                }
+            } else {
+                // New record: remove entirely and update indices
+                row.remove();
+                reindexFormset();
+            }
+        }
+    });
+
+    function reindexFormset() {
+        const rows = container.querySelectorAll('.formset-row');
+        totalForms.value = rows.length;
+        rows.forEach((row, index) => {
+            const regex = /course_teachers-(\d+|__prefix__)-/g;
+            const replacement = `course_teachers-${index}-`;
+            
+            row.querySelectorAll('input, select, label, textarea').forEach(el => {
+                if (el.name) el.name = el.name.replace(regex, replacement);
+                if (el.id) el.id = el.id.replace(regex, replacement);
+                if (el.getAttribute('for')) el.setAttribute('for', el.getAttribute('for').replace(regex, replacement));
+            });
+        });
+    }
+
+    // Hide/Show salary fields based on type
+    function toggleSalaryFields(row) {
+        const typeSelect = row.querySelector('select[name*="salary_type"]');
+        const fixedDiv = row.querySelector('.fixed-salary');
+        const percentDiv = row.querySelector('.percent-salary');
+        
+        if (typeSelect && fixedDiv && percentDiv) {
+            if (typeSelect.value === 'fixed') {
+                fixedDiv.style.display = 'block';
+                percentDiv.style.display = 'none';
+            } else {
+                fixedDiv.style.display = 'none';
+                percentDiv.style.display = 'block';
+            }
+        }
+    }
+
+    container.addEventListener('change', function(e) {
+        if (e.target.name && e.target.name.includes('salary_type')) {
+            toggleSalaryFields(e.target.closest('.formset-row'));
+        }
+    });
+
+    // Initial toggle for existing rows
+    document.querySelectorAll('.formset-row').forEach(row => {
+        toggleSalaryFields(row);
+    });
+});
+</script>
 {% endblock %}

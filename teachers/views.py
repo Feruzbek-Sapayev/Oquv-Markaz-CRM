@@ -48,11 +48,12 @@ def teacher_detail(request, pk):
             messages.error(request, "Ushbu sahifani ko'rish huquqingiz yo'q!")
             return redirect('dashboard:home')
 
-    teacher_courses = CourseTeacher.objects.filter(teacher=teacher).values_list('course_id', flat=True)
-    courses = Course.objects.filter(id__in=teacher_courses).values_list('id', flat=True)
+    assignments = CourseTeacher.objects.filter(teacher=teacher).select_related('course')
+    courses = [ta.course for ta in assignments]
     groups = Group.objects.filter(course__in=courses).select_related('course').order_by('-is_active', 'name')
     context = {
         'teacher': teacher,
+        'assignments': assignments,
         'groups': groups,
     }
     return render(request, 'teachers/teacher_detail.html', context)

@@ -24,7 +24,7 @@ def payment_list(request):
     if request.user.is_admin_role:
         payments = Payment.objects.select_related('student', 'group__course', 'created_by').all()
     elif request.user.is_teacher:
-        payments = Payment.objects.filter(group__teacher__user=request.user).select_related('student', 'group__course', 'created_by')
+        payments = Payment.objects.filter(group__course__course_teachers__teacher__user=request.user).select_related('student', 'group__course', 'created_by').distinct()
     elif request.user.is_student:
         payments = Payment.objects.filter(student__user=request.user).select_related('student', 'group__course', 'created_by')
     else:
@@ -123,7 +123,7 @@ def debtor_list(request):
     if request.user.is_admin_role:
         payments = Payment.objects.filter(status__in=['unpaid', 'partial'])
     elif request.user.is_teacher:
-        payments = Payment.objects.filter(status__in=['unpaid', 'partial'], group__teacher__user=request.user)
+        payments = Payment.objects.filter(status__in=['unpaid', 'partial'], group__course__course_teachers__teacher__user=request.user).distinct()
     else:
         messages.error(request, "Qarzdorlar ro'yxatini ko'rish huquqingiz yo'q!")
         return redirect('dashboard:home')
@@ -147,7 +147,7 @@ def payment_pdf(request, pk):
         if request.user.is_student and payment.student.user != request.user:
             messages.error(request, "Boshqa o'quvchining chekini ko'ra olmaysiz!")
             return redirect('dashboard:home')
-        if request.user.is_teacher and payment.group.teacher.user != request.user:
+        if request.user.is_teacher and not payment.group.course.course_teachers.filter(teacher__user=request.user).exists():
             messages.error(request, "Faqat o'z guruhlaringiz to'lovlarini ko'ra olasiz!")
             return redirect('dashboard:home')
     buffer = BytesIO()

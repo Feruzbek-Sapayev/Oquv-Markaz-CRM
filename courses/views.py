@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.forms import inlineformset_factory
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.core.paginator import Paginator
-from .models import Course, Group, Enrollment
-from .forms import CourseForm, GroupForm, EnrollmentForm
+from .models import Course, Group, Enrollment, CourseTeacher
+from .forms import CourseForm, GroupForm, EnrollmentForm, CourseTeacherForm
 from accounts.permissions import admin_required, teacher_required
 import openpyxl
 from django.http import HttpResponse
@@ -16,31 +17,95 @@ def course_list(request):
     courses = Course.objects.all()
     return render(request, 'courses/course_list.html', {'courses': courses})
 
+@login_required
+def course_detail(request, pk):
+    course = get_object_or_404(Course, pk=pk)
+    teachers = course.course_teachers.select_related('teacher').all()
+    groups = course.groups.all()
+    return render(request, 'courses/course_detail.html', {
+        'course': course,
+        'teachers': teachers,
+        'groups': groups
+    })
+
+@admin_required
+def course_assign_teacher(request, pk):
+    course = get_object_or_404(Course, pk=pk)
+    if request.method == 'POST':
+        form = CourseTeacherForm(request.POST)
+        if form.is_valid():
+            ct = form.save(commit=False)
+            ct.course = course
+            ct.save()
+            messages.success(request, f"{ct.teacher} kursga biriktirildi!")
+            return redirect('courses:course_detail', pk=pk)
+    else:
+        form = CourseTeacherForm()
+    return render(request, 'courses/course_teacher_form.html', {'form': form, 'course': course, 'title': "O'qituvchi biriktirish"})
+
+@admin_required
+def course_remove_teacher(request, pk):
+    ct = get_object_or_404(CourseTeacher, pk=pk)
+    course_pk = ct.course.pk
+    if request.method == 'POST':
+        ct.delete()
+        messages.success(request, "O'qituvchi kursdan olib tashlandi!")
+    return redirect('courses:course_detail', pk=course_pk)
+
 @admin_required
 def course_create(request):
+    CourseTeacherFormSet = inlineformset_factory(
+        Course, CourseTeacher, 
+        form=CourseTeacherForm,
+        extra=1, can_delete=True
+    )
     if request.method == 'POST':
-        form = CourseForm(request.POST)
-        if form.is_valid():
+        form = CourseForm(request.POST, request.FILES)
+        formset = CourseTeacherFormSet(request.POST, prefix='course_teachers')
+        if form.is_valid() and formset.is_valid():
             course = form.save()
-            messages.success(request, f"'{course.name}' kursi qo'shildi!")
-            return redirect('courses:course_list')
+            instances = formset.save(commit=False)
+            for instance in instances:
+                instance.course = course
+                instance.save()
+            for obj in formset.deleted_objects:
+                obj.delete()
+            messages.success(request, f"'{course.name}' kursi va o'qituvchilari saqlandi!")
+            return redirect('courses:course_detail', pk=course.pk)
     else:
         form = CourseForm()
-    return render(request, 'courses/course_form.html', {'form': form, 'title': 'Yangi kurs'})
-
+        formset = CourseTeacherFormSet(prefix='course_teachers')
+    return render(request, 'courses/course_form.html', {
+        'form': form, 
+        'formset': formset,
+        'title': 'Yangi kurs'
+    })
 
 @admin_required
 def course_edit(request, pk):
     course = get_object_or_404(Course, pk=pk)
+    CourseTeacherFormSet = inlineformset_factory(
+        Course, CourseTeacher, 
+        form=CourseTeacherForm,
+        extra=0, can_delete=True
+    )
     if request.method == 'POST':
-        form = CourseForm(request.POST, instance=course)
-        if form.is_valid():
+        form = CourseForm(request.POST, request.FILES, instance=course)
+        formset = CourseTeacherFormSet(request.POST, instance=course, prefix='course_teachers')
+        if form.is_valid() and formset.is_valid():
             form.save()
-            messages.success(request, 'Kurs yangilandi!')
-            return redirect('courses:course_list')
+            formset.save()
+            messages.success(request, "Kurs ma'lumotlari yangilandi!")
+            return redirect('courses:course_detail', pk=pk)
     else:
         form = CourseForm(instance=course)
-    return render(request, 'courses/course_form.html', {'form': form, 'title': 'Kursni tahrirlash', 'obj': course})
+        formset = CourseTeacherFormSet(instance=course, prefix='course_teachers')
+    return render(request, 'courses/course_form.html', {
+        'form': form, 
+        'formset': formset,
+        'title': 'Tahrirlash', 
+        'obj': course
+    })
 
 
 @admin_required
@@ -57,11 +122,11 @@ def course_delete(request, pk):
 @login_required
 def group_list(request):
     if request.user.is_admin_role:
-        groups = Group.objects.select_related('course', 'teacher').all()
+        groups = Group.objects.select_related('course').all()
     elif request.user.is_teacher:
-        groups = Group.objects.filter(teacher__user=request.user).select_related('course', 'teacher')
+        groups = Group.objects.filter(course__course_teachers__teacher__user=request.user).select_related('course').distinct()
     elif request.user.is_student:
-        groups = Group.objects.filter(enrollments__student__user=request.user, enrollments__is_active=True).select_related('course', 'teacher')
+        groups = Group.objects.filter(enrollments__student__user=request.user, enrollments__is_active=True).select_related('course').distinct()
     else:
         groups = Group.objects.none()
 
@@ -74,11 +139,11 @@ def group_list(request):
 
 @login_required
 def group_detail(request, pk):
-    group = get_object_or_404(Group.objects.select_related('course', 'teacher'), pk=pk)
+    group = get_object_or_404(Group.objects.select_related('course'), pk=pk)
     
     # Permission check
     if not request.user.is_admin_role:
-        if request.user.is_teacher and group.teacher.user != request.user:
+        if request.user.is_teacher and not group.course.course_teachers.filter(teacher__user=request.user).exists():
             messages.error(request, "Bu guruhga kirish huquqingiz yo'q!")
             return redirect('courses:group_list')
         if request.user.is_student and not group.enrollments.filter(student__user=request.user, is_active=True).exists():
@@ -86,9 +151,11 @@ def group_detail(request, pk):
             return redirect('courses:group_list')
 
     enrollments = group.enrollments.filter(is_active=True).select_related('student')
+    teachers = group.course.course_teachers.select_related('teacher')
     return render(request, 'courses/group_detail.html', {
         'group': group,
         'enrollments': enrollments,
+        'teachers': teachers,
     })
 
 
@@ -109,7 +176,7 @@ def group_create(request):
 def group_edit(request, pk):
     group = get_object_or_404(Group, pk=pk)
     
-    if not request.user.is_admin_role and group.teacher.user != request.user:
+    if not request.user.is_admin_role and not group.course.course_teachers.filter(teacher__user=request.user).exists():
         messages.error(request, "Faqat o'zingizning guruhlaringizni tahrirlashingiz mumkin!")
         return redirect('courses:group_list')
     if request.method == 'POST':
@@ -127,7 +194,7 @@ def group_edit(request, pk):
 def group_delete(request, pk):
     group = get_object_or_404(Group, pk=pk)
     
-    if not request.user.is_admin_role and group.teacher.user != request.user:
+    if not request.user.is_admin_role and not group.course.course_teachers.filter(teacher__user=request.user).exists():
         messages.error(request, "Faqat o'zingizning guruhlaringizni o'chirishingiz mumkin!")
         return redirect('courses:group_list')
     if request.method == 'POST':
@@ -142,7 +209,7 @@ def group_delete(request, pk):
 def enrollment_create(request, group_pk):
     group = get_object_or_404(Group, pk=group_pk)
     
-    if not request.user.is_admin_role and group.teacher.user != request.user:
+    if not request.user.is_admin_role and not group.course.course_teachers.filter(teacher__user=request.user).exists():
         messages.error(request, "Faqat o'zingizning guruhlaringizga o'quvchi qo'shishingiz mumkin!")
         return redirect('courses:group_list')
     if request.method == 'POST':
@@ -163,7 +230,7 @@ def enrollment_remove(request, pk):
     enrollment = get_object_or_404(Enrollment, pk=pk)
     group_pk = enrollment.group.pk
     
-    if not request.user.is_admin_role and enrollment.group.teacher.user != request.user:
+    if not request.user.is_admin_role and not enrollment.group.course.course_teachers.filter(teacher__user=request.user).exists():
         messages.error(request, "Faqat o'zingizning guruhlaringizdan o'quvchi chiqarishingiz mumkin!")
         return redirect('courses:group_detail', pk=group_pk)
     if request.method == 'POST':
