@@ -610,7 +610,7 @@ body {
   padding: 10px 14px !important;
   font-size: 14px !important;
   transition: var(--transition) !important;
-  background: var(--bg-input) !important;
+  background: transparent !important;
   color: var(--text-body) !important;
 }
 
@@ -623,7 +623,7 @@ body {
 .form-select:focus {
   border-color: var(--primary) !important;
   box-shadow: 0 0 0 3px rgba(79, 107, 239, 0.25) !important;
-  background: var(--bg-input) !important;
+  background: transparent !important;
 }
 
 /* ── SEARCH BOX ── */
@@ -1153,16 +1153,15 @@ body.dark .btn-icon:hover {
 }
 
 body.dark .form-control,
-body.dark .form-select,
-body.dark .search-box input {
-  background: var(--bg-input) !important;
+body.dark .form-select {
+  background: transparent !important;
   color: var(--text-body) !important;
   border-color: var(--border-subtle) !important;
 }
 
 body.dark .form-control:focus,
 body.dark .form-select:focus {
-  background: var(--bg-input) !important;
+  background: transparent !important;
 }
 
 body.dark .table-custom tr:hover td {

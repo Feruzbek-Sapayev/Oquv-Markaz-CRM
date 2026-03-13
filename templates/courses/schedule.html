@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dars Jadvali | {{ block.super }}{% endblock %}
+
+{% block page_title %}Dars Jadvali{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timetable-wrapper {
+        background: var(--bg-card);
+        border-radius: 20px;
+        border: 1px solid var(--border-subtle);
+        padding: 20px;
+        overflow-x: auto;
+        box-shadow: var(--card-shadow);
+    }
+
+    .subtitle-text {
+        color: var(--text-muted);
+        font-weight: 500;
+        opacity: 0.9;
+    }
+
+    .timetable-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(180px, 1fr));
+        min-width: 1100px;
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--bg-main);
+    }
+
+    .day-col {
+        border-right: 1px solid var(--border-subtle);
+        display: flex;
+        flex-direction: column;
+        min-height: 600px;
+    }
+
+    .day-col:last-child {
+        border-right: none;
+    }
+
+    .day-name-header {
+        padding: 16px;
+        text-align: center;
+        background: var(--bg-card);
+        font-weight: 700;
+        color: var(--text-heading);
+        font-size: 0.8rem;
+        border-bottom: 2px solid var(--border-subtle);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .day-name-header.is-today {
+        background: var(--primary);
+        color: white;
+        border-bottom-color: var(--primary-dark);
+    }
+
+    .lessons-container {
+        padding: 12px;
+        flex-grow: 1;
+        background-image: linear-gradient(var(--border-subtle) 1px, transparent 1px);
+        background-size: 100% 60px;
+    }
+
+    .lesson-card {
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        border: none;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .lesson-card:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+        z-index: 10;
+    }
+
+    /* Group Color Variants - Solid and Vibrant */
+    .color-0 { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+    .color-1 { background: linear-gradient(135deg, #10b981, #059669); }
+    .color-2 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .color-3 { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .color-4 { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .color-5 { background: linear-gradient(135deg, #ec4899, #db2777); }
+    .color-6 { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+    .color-7 { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .color-8 { background: linear-gradient(135deg, #475569, #1e293b); } /* Slate */
+    .color-9 { background: linear-gradient(135deg, #84cc16, #65a30d); } /* Lime */
+
+    .lesson-course-name {
+        font-weight: 800;
+        font-size: 1rem;
+        margin-bottom: 4px;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .lesson-time-range {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.95);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .lesson-meta {
+        margin-top: 10px;
+        font-size: 0.75rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        color: rgba(255, 255, 255, 0.85);
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        padding-top: 10px;
+    }
+
+    .lesson-meta span:last-child {
+        grid-column: span 2;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 5px;
+        margin-top: 2px;
+    }
+
+    .lesson-meta i {
+        color: white;
+        opacity: 0.9;
+        font-size: 0.8rem;
+    }
+
+    .empty-slot-msg {
+        text-align: center;
+        padding: 40px 10px;
+        color: var(--text-muted);
+        font-style: italic;
+        font-size: 0.8rem;
+        opacity: 0.6;
+    }
+
+    @media print {
+        .timetable-wrapper {
+            box-shadow: none;
+            padding: 0;
+            border: none;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .tab-nav-mobile {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 5px 0 15px;
+            margin-bottom: 10px;
+            scrollbar-width: none;
+        }
+        
+        .tab-nav-mobile::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .tab-btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            white-space: nowrap;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(79, 107, 239, 0.2);
+        }
+
+        .timetable-wrapper {
+            padding: 0;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+
+        .timetable-grid {
+            display: block;
+            min-width: auto;
+            border: none;
+            background: transparent;
+        }
+
+        .day-col {
+            display: none;
+            border: none;
+            min-height: auto;
+        }
+
+        .day-col.active-day {
+            display: block;
+        }
+        
+        .day-name-header {
+            display: none;
+        }
+        
+        .lessons-container {
+            padding: 0;
+            background: none;
+        }
+        
+        .lesson-card {
+            margin-bottom: 16px;
+            padding: 16px;
+            border-left-width: 5px;
+        }
+    }
+
+    @media (min-width: 769px) {
+        .tab-nav-mobile {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 page-header">
+    <div>
+        <h4 class="mb-1" style="font-weight: 800; color: var(--text-heading);">Haftalik Dars Jadvali</h4>
+        <p class="subtitle-text mb-0">Barcha darslarning haftalik taqsimoti</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn-outline-custom">
+            <i class="fas fa-print me-2"></i> PDF / Chop etish
+        </button>
+    </div>
+</div>
+
+<!-- Mobile Day Tabs -->
+<div class="tab-nav-mobile">
+    {% for day, lessons in schedule.items %}
+    <button class="tab-btn {% if forloop.first %}active{% endif %}" onclick="showDay('{{ forloop.counter }}', this)">
+        {{ day }}
+    </button>
+    {% endfor %}
+</div>
+
+<div class="timetable-wrapper">
+    <div class="timetable-grid">
+        {% for day, lessons in schedule.items %}
+        <div class="day-col {% if forloop.first %}active-day{% endif %}" id="col-{{ forloop.counter }}">
+            <div class="day-name-header" id="header-{{ forloop.counter }}">
+                {{ day }}
+            </div>
+            <div class="lessons-container">
+                {% if lessons %}
+                    {% for lesson in lessons %}
+                    <div class="lesson-card color-{{ lesson.id|add:0|slugify|last }}">
+                        <div class="lesson-course-name">{{ lesson.course.name }}</div>
+                        <div class="lesson-time-range">{{ lesson.start_time|time:"H:i" }} - {{ lesson.end_time|time:"H:i" }}</div>
+                        
+                        <div class="lesson-meta">
+                            <span><i class="fas fa-users"></i> {{ lesson.student_count }}</span>
+                            <span>{% if lesson.room %}{{ lesson.room }}{% else %}-{% endif %} xona</span>
+                            <span><i class="fas fa-layer-group"></i> {{ lesson.name }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-slot-msg">Darslar mavjud emas</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showDay(index, btn) {
+        // Hide all cols
+        document.querySelectorAll('.day-col').forEach(col => col.classList.remove('active-day'));
+        // Show selected
+        document.getElementById('col-' + index).classList.add('active-day');
+        
+        // Update tabs
+        document.querySelectorAll('.tab-btn').forEach(tb => tb.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const d = new Date();
+        const dayIndex = d.getDay(); // 0 (Sun) to 6 (Sat)
+        let uzDayIndex;
+        if (dayIndex === 0) uzDayIndex = 7; // Sunday
+        else uzDayIndex = dayIndex; // Mon-Sat (1-6)
+        
+        // Highlighting today on desktop
+        const header = document.getElementById('header-' + uzDayIndex);
+        if (header) {
+            header.classList.add('is-today');
+            header.textContent += ' (BUGUN)';
+        }
+
+        // On mobile, automatically show today
+        if (window.innerWidth <= 768) {
+            const tabs = document.querySelectorAll('.tab-btn');
+            if (tabs[uzDayIndex - 1]) {
+                tabs[uzDayIndex - 1].click();
+            }
+        }
+    });
+</script>
+{% endblock %}

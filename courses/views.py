@@ -253,4 +253,57 @@ def group_export_excel(request, pk):
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename=group_{group.name}.xlsx'
     wb.save(response)
-    return response
+@login_required
+def lesson_schedule(request):
+    # Determine which groups to show based on role
+    if request.user.is_admin_role:
+        groups = Group.objects.filter(is_active=True).select_related('course')
+    elif request.user.is_teacher:
+        groups = Group.objects.filter(
+            is_active=True,
+            course__course_teachers__teacher__user=request.user
+        ).select_related('course').distinct()
+    elif request.user.is_student:
+        groups = Group.objects.filter(
+            is_active=True,
+            enrollments__student__user=request.user,
+            enrollments__is_active=True
+        ).select_related('course').distinct()
+    else:
+        groups = Group.objects.none()
+    
+    # Organize groups by day
+    # We'll use day names in Uzbek for the frontend
+    days_map = [
+        ('Monday', 'Dushanba'),
+        ('Tuesday', 'Seshanba'),
+        ('Wednesday', 'Chorshanba'),
+        ('Thursday', 'Payshanba'),
+        ('Friday', 'Juma'),
+        ('Saturday', 'Shanba'),
+        ('Sunday', 'Yakshanba'),
+    ]
+    
+    schedule = {day[1]: [] for day in days_map}
+    
+    for group in groups:
+        if group.days == Group.DayChoices.ODD:
+            schedule['Dushanba'].append(group)
+            schedule['Chorshanba'].append(group)
+            schedule['Juma'].append(group)
+        elif group.days == Group.DayChoices.EVEN:
+            schedule['Seshanba'].append(group)
+            schedule['Payshanba'].append(group)
+            schedule['Shanba'].append(group)
+        elif group.days == Group.DayChoices.DAILY:
+            for day in schedule:
+                schedule[day].append(group)
+        elif group.days == Group.DayChoices.WEEKEND:
+            schedule['Shanba'].append(group)
+            schedule['Yakshanba'].append(group)
+            
+    # Sort each day by start_time
+    for day in schedule:
+        schedule[day].sort(key=lambda x: x.start_time)
+        
+    return render(request, 'courses/schedule.html', {'schedule': schedule, 'title': 'Dars Jadvali'})

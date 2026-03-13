@@ -67,7 +67,7 @@
 
     {% if user.is_admin_role %}
     <div class="nav-item">
-      <a href="{% url 'courses:course_list' %}" class="{% if request.resolver_match.app_name == 'courses' and 'group' not in request.path %}active{% endif %}">
+      <a href="{% url 'courses:course_list' %}" class="{% if request.resolver_match.app_name == 'courses' and 'group' not in request.path and 'schedule' not in request.path %}active{% endif %}">
         <span class="nav-icon"><i class="fas fa-book-open"></i></span>
         <span>Kurslar</span>
       </a>
@@ -75,9 +75,16 @@
     {% endif %}
 
     <div class="nav-item">
-      <a href="{% url 'courses:group_list' %}" class="{% if 'groups' in request.path %}active{% endif %}">
+      <a href="{% url 'courses:group_list' %}" class="{% if 'groups' in request.path and 'schedule' not in request.path %}active{% endif %}">
         <span class="nav-icon"><i class="fas fa-users"></i></span>
         <span>Guruhlar</span>
+      </a>
+    </div>
+
+    <div class="nav-item">
+      <a href="{% url 'courses:lesson_schedule' %}" class="{% if 'schedule' in request.path %}active{% endif %}">
+        <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+        <span>Dars Jadvali</span>
       </a>
     </div>
 

@@ -19,6 +19,7 @@ urlpatterns = [
     path('groups/<int:pk>/edit/', views.group_edit, name='group_edit'),
     path('groups/<int:pk>/delete/', views.group_delete, name='group_delete'),
     path('groups/<int:pk>/export/', views.group_export_excel, name='group_export'),
+    path('schedule/', views.lesson_schedule, name='lesson_schedule'),
     # Enrollments
     path('groups/<int:group_pk>/enroll/', views.enrollment_create, name='enrollment_create'),
     path('enrollments/<int:pk>/remove/', views.enrollment_remove, name='enrollment_remove'),
